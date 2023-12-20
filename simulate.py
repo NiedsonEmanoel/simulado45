@@ -127,6 +127,7 @@ def main():
     else:
         st.subheader("Adicione o arquivo .csv do seu simulado ao lado ou gere seu simulado.")
 
+
     anwers = []
 
     with st.form("form", clear_on_submit=False):

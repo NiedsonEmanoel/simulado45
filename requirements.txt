@@ -3,3 +3,10 @@ numpy
 plotly
 streamlit
 scipy
+genanki
+fpdf
+Pillow
+python-barcode
+seaborn
+matplotlib
+wordcloud

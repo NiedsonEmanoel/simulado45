@@ -1,10 +1,15 @@
 import pandas as pd
 import numpy as np
 import time
+import random
 import plotly.express as px
 import streamlit as st
 import numpy as np
 from scipy.optimize import minimize_scalar
+
+def generate_random_number():
+    # Gerar um número inteiro aleatório entre 0 e 100000
+    return random.randint(0, 100000)
 
 def calcular_probabilidade(theta, a, b, c):
     return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
@@ -35,6 +40,9 @@ def encontrar_theta_max(a, b, c, x):
 st.set_page_config(layout='wide', page_title='Enemaster.app', initial_sidebar_state="expanded", page_icon="🧊",    menu_items={
         'About': "# Feito por *enemaster.app*"
     })
+
+
+
 def main():
     st.sidebar.markdown(f'<img width="100%" src="https://raw.githubusercontent.com/NiedsonEmanoel/NiedsonEmanoel/main/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/natureza/EneMaster.png">',unsafe_allow_html=True)
     st.sidebar.markdown(f"<br><hr>",unsafe_allow_html=True)
@@ -53,20 +61,26 @@ def main():
 
     anwers = []
 
-    with st.form("form"):
+    with st.form("form", clear_on_submit=False):
 
         if uploaded_file is not None:
+            nu = 1
             for i in dItens.index:
+                #st.caption()
                 l = dItens.loc[i, "imagAPI"]
                 st.markdown(f'<img src="{l}">',unsafe_allow_html=True)
                 st.markdown(f"<br>",unsafe_allow_html=True)
-                Resposta = st.radio('Resposta', ['A', 'B', 'C', 'D', 'E'], horizontal=True, key=dItens.loc[i, "CO_ITEM"])
+                Resposta = st.radio(
+                        'Questão ' + str(nu) + ' - Resposta:',
+                        ['A', 'B', 'C', 'D', 'E'],
+                        horizontal=True,
+                    )
                 if dItens.loc[i, "TX_GABARITO"] == Resposta:
                     anwers.append(1)
                 else:
                     anwers.append(0)
-        
                 st.markdown(f"<hr>",unsafe_allow_html=True)
+                nu+=1
 
             submitted = st.form_submit_button("Concluir!", type="primary")
             if submitted:
@@ -77,6 +91,9 @@ def main():
                 tri = round(theta_max_list[0],2)
                 st.success('Sua nota aproximada é: '+str(tri), icon="✅")
                 st.balloons()
+                anwers
+                
+
 if __name__ == "__main__":
     main()
             

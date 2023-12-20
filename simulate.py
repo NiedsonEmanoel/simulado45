@@ -147,7 +147,7 @@ def questHab(dfResult_CN, name):
     dfResult_CN.drop(cols_to_drop, axis=1, inplace=True)
 
     Capa(dfResult_CN)
-    flashnames = flashnamesa(dfResult_CN['SG_AREA'][0])
+    flashnames = dfResult_CN['SG_AREA'][0]
     dfResult_CN.sort_values('theta_065', ascending=True, inplace=True)
     dfResult_CN['indexacao'] = dfResult_CN.reset_index().index + 1
 
@@ -423,7 +423,7 @@ def main():
                         st.sidebar.download_button(
                             label="Questões Erradas",
                             data=PDFbyte,
-                            file_name="erradas_"+str(flashnamesa(dItens['SG_AREA'][0]))+".pdf",
+                            file_name="erradas_"+str((dItens['SG_AREA'][0]))+".pdf",
                             mime='application/octet-stream',
                         )
 

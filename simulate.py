@@ -147,7 +147,7 @@ def questHab(dfResult_CN, name):
     dfResult_CN.drop(cols_to_drop, axis=1, inplace=True)
 
     Capa(dfResult_CN)
-    flashnames = dfResult_CN['SG_AREA'][0]
+    flashnames = 'erradas'
     dfResult_CN.sort_values('theta_065', ascending=True, inplace=True)
     dfResult_CN['indexacao'] = dfResult_CN.reset_index().index + 1
 
@@ -242,7 +242,7 @@ def questHab(dfResult_CN, name):
     pdf.set_fill_color(89, 162, 165)
     # Title
     pdf.ln(15)
-    pdf.cell(0, 10, str('GABARITO '+flashnames.upper()), 0, 1, 'C', 1)
+    pdf.cell(0, 10, str('GABARITO'), 0, 1, 'C', 1)
     pdf.ln(10)
     pdf.set_font('Arial', 'B', 12)
 

@@ -90,9 +90,7 @@ def main():
                     theta_max_list = encontrar_theta_max(a, b, c, x)
                 tri = round(theta_max_list[0],2)
                 st.success('Sua nota aproximada é: '+str(tri), icon="✅")
-                st.balloons()
-                anwers
-                
+                st.balloons()                
 
 if __name__ == "__main__":
     main()

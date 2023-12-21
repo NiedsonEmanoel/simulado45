@@ -600,17 +600,15 @@ def main():
                     print(f'Arquivos foram zipados para {zip_filename} e os originais foram removidos.')
 
                     with open(zip_filename, "rb") as fp:
-                        ZPs = fp.read()
                         st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
                         st.info('Baixe seu material de estudo ao lado.', icon="ℹ️")
-                        namesFile
                         st.balloons()
                         st.sidebar.download_button(
                             label="Download Material de Estudo",
                             type='primary',
-                            data=ZPs,
-                            file_name="erradas_"+str((dItens['SG_AREA'][0]))+".pdf",
-                            mime='application/octet-stream',
+                            data=fp,
+                            file_name=zip_filename,
+                            mime='application/zip',
                         )
 
 if __name__ == "__main__":

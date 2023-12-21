@@ -531,7 +531,7 @@ def main():
         if uploaded_file is not None :
             nu = 1
             for i in dItens.index:
-                strCN ="Nº"+str(nu)+" - Q" + str(dItens.loc[i, "CO_POSICAO"])+':'+str(dItens.loc[i, "ANO"]) + ' - H'+str(dItens.loc[i, "CO_HABILIDADE"].astype(int))+ " - Proficiência: " + str(dItens.loc[i, "theta_065"].round(2))
+                strCN ="Nº"+str(nu)+" - Q" + str(dItens.loc[i, "CO_POSICAO"])+':'+str(dItens.loc[i, "ANO"]) 
                 st.caption(strCN)
 
                 st.image(dItens.loc[i, "imagAPI"])

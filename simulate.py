@@ -18,6 +18,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import barcode
+import zipfile
 from barcode.writer import ImageWriter
 
 
@@ -580,8 +581,26 @@ def main():
                     else:
                         namesFile.append(flRevisa+'.apkg')
 
-                    with open("erradas.pdf", "rb") as pdf_file:
-                        PDFbyte = pdf_file.read()
+                    zip_filename = 'materialestudo.zip'
+
+                    # Crie um objeto ZipFile em modo de escrita
+                    with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                        # Adicione cada arquivo à archive
+                        for file in namesFile:
+                            # Certifique-se de que o arquivo exista antes de adicioná-lo ao zip
+                            if os.path.exists(file):
+                                zipf.write(file, os.path.basename(file))
+
+                    # Apague os arquivos originais após zipar
+                    for file in namesFile:
+                        if os.path.exists(file):
+                            os.remove(file)
+                            print(f'O arquivo {file} foi removido com sucesso.')
+
+                    print(f'Arquivos foram zipados para {zip_filename} e os originais foram removidos.')
+
+                    with open(zip_filename, "rb") as fp:
+                        ZPs = fp.read()
                         st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
                         st.info('Baixe seu material de estudo ao lado.', icon="ℹ️")
                         namesFile
@@ -589,7 +608,7 @@ def main():
                         st.sidebar.download_button(
                             label="Download Material de Estudo",
                             type='primary',
-                            data=PDFbyte,
+                            data=ZPs,
                             file_name="erradas_"+str((dItens['SG_AREA'][0]))+".pdf",
                             mime='application/octet-stream',
                         )

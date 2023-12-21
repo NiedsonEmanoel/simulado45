@@ -143,11 +143,14 @@ def generate_random_number():
 
 
 def questHab(dfResult_CN, name):
-    cols_to_drop = ['TP_LINGUA', 'TX_MOTIVO_ABAN', 'IN_ITEM_ADAPTADO', 'NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']
-    dfResult_CN.drop(cols_to_drop, axis=1, inplace=True)
+    try:
+        cols_to_drop = ['TP_LINGUA', 'TX_MOTIVO_ABAN', 'IN_ITEM_ABAN', 'IN_ITEM_ADAPTADO', 'NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']
+        dfResult.drop(cols_to_drop, axis=1, inplace=True)
+        Capa(dfResult_CN)
+    except:
+        pass
 
-    Capa(dfResult_CN)
-    flashnames = 'erradas'
+    flashnames = name
     dfResult_CN.sort_values('theta_065', ascending=True, inplace=True)
     dfResult_CN['indexacao'] = dfResult_CN.reset_index().index + 1
 
@@ -288,6 +291,150 @@ def encontrar_theta_max(a, b, c, x):
         theta_max_list.append(result.x * 100 + 500)
     return theta_max_list
 
+modelo = genanki.Model(
+    187333333,
+    'enemaster',
+    fields=[
+        {'name': 'MyMedia'},
+        {'name': 'Questão'},
+        {'name': 'Resposta'},
+        {'name': 'Image'}
+    ],
+    templates=[
+        {
+            'name': 'Cartão 1',
+            'qfmt': '<b>{{Questão}}</b><hr>{{MyMedia}}',
+            'afmt': '{{FrontSide}}<br><hr><b>{{Resposta}}<hr></b></b>{{Image}}',
+        },
+    ])
+
+def questionBalance_99(name, sg, nota_CN, dfResult):
+    nota_CNMaior = nota_CN + 130
+    nota_CNMenor = nota_CN - 80
+
+    dfResult = dfResult.query("IN_ITEM_ABAN == 0 and TP_LINGUA not in [0, 1]")
+    try:
+        cols_to_drop = ['TP_LINGUA', 'TX_MOTIVO_ABAN', 'IN_ITEM_ABAN', 'IN_ITEM_ADAPTADO', 'NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']
+        dfResult.drop(cols_to_drop, axis=1, inplace=True)
+    except:
+        pass
+    # Para a área de Natureza (CN)
+    dfResult_CN = dfResult[dfResult['SG_AREA'] == sg]
+    dfResultInterc = dfResult_CN[dfResult_CN['theta_065'] <= nota_CN+200]
+    dfResultInterc = dfResult_CN[dfResult_CN['theta_065'] >= nota_CN-30]
+    dfResult_CN = dfResult_CN[dfResult_CN['theta_099'] <= nota_CNMaior]
+    dfResult_CN = dfResult_CN[dfResult_CN['theta_099'] >= nota_CNMenor]
+    dfResult_CN = dfResult_CN[~dfResult_CN['theta_065'].isin(dfResultInterc['theta_065'])]
+    dfResult_CN.sort_values('theta_065', ascending=True, inplace=True)
+    dfResult_CN['indexacao'] = dfResult_CN.reset_index().index + 1
+
+    # Criar um baralho para armazenar os flashcards
+    baralho = genanki.Deck(
+        generate_random_number(), # Um número aleatório que identifica o baralho
+        str('TRI::Revisão::'+str(name)) # O nome do baralho
+    )
+
+    # Criar uma lista para armazenar as informações dos flashcards
+    flashcards = []
+
+    # Percorrer as linhas do dataframe dfResult_CN
+    for i in dfResult_CN.index:
+        # Obter o nome do arquivo de imagem da questão
+        imagem = str(dfResult_CN.loc[i, "CO_ITEM"]) + '.png'
+        imagemQ = str(dfResult_CN.loc[i, "CO_ITEM"]) + '.gif'
+
+        # Obter a resposta da questão
+        resposta =str('Gabarito: ')+ str(dfResult_CN.loc[i, 'TX_GABARITO'])
+        inic = "Q" + str(dfResult_CN.loc[i, "CO_POSICAO"]) + ':' + str(dfResult_CN.loc[i, "ANO"]) + ' - H' + str(dfResult_CN.loc[i, "CO_HABILIDADE"].astype(int)) + " - Proficiência: " + str(dfResult_CN.loc[i, "theta_065"].round(2))
+
+        # Criar um flashcard com a imagem e a resposta
+        flashcard = genanki.Note(
+            model=modelo,
+            fields=[inic, '<img src="https://niedsonemanoel.com.br/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/1.%20Itens%20BNI_/' + imagem + '"]', resposta,  '<img src="https://niedsonemanoel.com.br/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/1.%20Itens%20BNI_/Correcao/' + imagemQ + '"]']
+        )
+
+        # Adicionar o flashcard à lista de flashcards
+        flashcards.append(flashcard)
+
+    for flashcard in flashcards:
+        baralho.add_note(flashcard)
+
+    # Criar um pacote com o baralho e as imagens
+    pacote = genanki.Package(baralho)
+
+    ileo = True
+    if dfResult_CN.empty:
+        print("O DataFrame está vazio.")
+        ileo = False
+    else:
+        questHab(dfResult_CN, str(name)+'_revisao')
+
+
+    pacote.write_to_file(str(name)+'_revisao.apkg')
+    return str(name)+'_revisao', ileo
+
+def questionBalance_65(name, sg, nota_CN, dfResult):
+    nota_CNMaior = nota_CN + 200
+    nota_CNMenor = nota_CN - 30
+
+    dfResult = dfResult.query("IN_ITEM_ABAN == 0 and TP_LINGUA not in [0, 1]")
+    try:
+        cols_to_drop = ['TP_LINGUA', 'TX_MOTIVO_ABAN', 'IN_ITEM_ABAN', 'IN_ITEM_ADAPTADO', 'NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']
+        dfResult.drop(cols_to_drop, axis=1, inplace=True)
+    except:
+        pass
+    # Para a área de Natureza (CN)
+    dfResult_CN = dfResult[dfResult['SG_AREA'] == sg]
+    dfResult_CN = dfResult_CN[dfResult_CN['theta_065'] <= nota_CNMaior]
+    dfResult_CN = dfResult_CN[dfResult_CN['theta_065'] >= nota_CNMenor]
+    dfResult_CN.sort_values('theta_065', ascending=True, inplace=True)
+    dfResult_CN['indexacao'] = dfResult_CN.reset_index().index + 1
+
+    # Criar um baralho para armazenar os flashcards
+    baralho = genanki.Deck(
+        generate_random_number(), # Um número aleatório que identifica o baralho
+        str('TRI::Treino::'+str(name)) # O nome do baralho
+    )
+
+    # Criar uma lista para armazenar as informações dos flashcards
+    flashcards = []
+
+    # Percorrer as linhas do dataframe dfResult_CN
+    for i in dfResult_CN.index:
+        # Obter o nome do arquivo de imagem da questão
+        imagem = str(dfResult_CN.loc[i, "CO_ITEM"]) + '.png'
+        imagemQ = str(dfResult_CN.loc[i, "CO_ITEM"]) + '.gif'
+
+        # Obter a resposta da questão
+        resposta =str('Gabarito: ')+ str(dfResult_CN.loc[i, 'TX_GABARITO'])
+        inic = "Q" + str(dfResult_CN.loc[i, "CO_POSICAO"]) + ':' + str(dfResult_CN.loc[i, "ANO"]) + ' - H' + str(dfResult_CN.loc[i, "CO_HABILIDADE"].astype(int)) + " - Proficiência: " + str(dfResult_CN.loc[i, "theta_065"].round(2))
+
+        # Criar um flashcard com a imagem e a resposta
+        flashcard = genanki.Note(
+            model=modelo,
+            fields=[inic, '<img src="https://niedsonemanoel.com.br/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/1.%20Itens%20BNI_/' + imagem + '"]', resposta,  '<img src="https://niedsonemanoel.com.br/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/1.%20Itens%20BNI_/Correcao/' + imagemQ + '"]']
+        )
+
+        # Adicionar o flashcard à lista de flashcards
+        flashcards.append(flashcard)
+
+    for flashcard in flashcards:
+        baralho.add_note(flashcard)
+
+    # Criar um pacote com o baralho e as imagens
+    pacote = genanki.Package(baralho)
+
+    ileo = True
+    if dfResult_CN.empty:
+        print("O DataFrame está vazio.")
+        ileo = False
+    else:
+        questHab(dfResult_CN, str(name)+'_treino')
+
+
+    pacote.write_to_file(str(name)+'_treino.apkg')
+    return str(name)+'_treino', ileo
+
 st.set_page_config(layout='wide', page_title='Enemaster.app', initial_sidebar_state="expanded", page_icon="🧊",    menu_items={
         'About': "# Feito por *enemaster.app*"
     })
@@ -412,16 +559,36 @@ def main():
                     theta_max_list = encontrar_theta_max(a, b, c, x)
                 tri = round(theta_max_list[0],2)
                 st.success('Sua nota aproximada é: '+str(tri), icon="✅")
-                st.balloons()
                 erradas = pd.DataFrame(erradas)
-                with st.spinner("Gerando Relatórios..."):
+                with st.spinner("Gerando material de estudo..."):
+
                     questHab(erradas, 'erradas')
+
+                    flTreino, ileo65 = questionBalance_65(flashnamesa(str((dItens['SG_AREA'][0]))), dItens['SG_AREA'][0], tri, dItens)
+                    namesFile = ['erradas.pdf']
+                    if ileo65 == True:
+                        namesFile.append(flTreino+'.pdf')
+                        namesFile.append(flTreino+'.apkg')
+                    else:
+                        namesFile.append(flTreino+'.apkg')
+
+                    flRevisa, ileo99 = questionBalance_99(flashnamesa(str((dItens['SG_AREA'][0]))), dItens['SG_AREA'][0], tri, dItens)
+
+                    if ileo99 == True:
+                        namesFile.append(flRevisa+'.pdf')
+                        namesFile.append(flRevisa+'.apkg')
+                    else:
+                        namesFile.append(flRevisa+'.apkg')
+
                     with open("erradas.pdf", "rb") as pdf_file:
                         PDFbyte = pdf_file.read()
                         st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
-                        st.info('Baixe as questões erradas ao lado.', icon="ℹ️")
+                        st.info('Baixe seu material de estudo ao lado.', icon="ℹ️")
+                        namesFile
+                        st.balloons()
                         st.sidebar.download_button(
-                            label="Questões Erradas",
+                            label="Download Material de Estudo",
+                            type='primary',
                             data=PDFbyte,
                             file_name="erradas_"+str((dItens['SG_AREA'][0]))+".pdf",
                             mime='application/octet-stream',

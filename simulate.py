@@ -23,6 +23,7 @@ from barcode.writer import ImageWriter
 from urllib.parse import urlencode
 import json
 from streamlit_drawable_canvas import st_canvas
+
 def serialize_url(a, b, c, re):
     base_url = "https://r.api.enemaster.app.br/tri"
     
@@ -453,23 +454,38 @@ def main():
             key="canvas",
         )
 
-    
+        
+    dfCDN = pd.read_csv('https://raw.githubusercontent.com/NiedsonEmanoel/CDN_ENEMASTER/main/Simulados/simulate_cdn.csv', encoding='utf-8', decimal=',')
 
-    uploaded_file = st.file_uploader("Envie o arquivo do Simulado", type=['csv'])
-    if uploaded_file is not None:
-        dItens = pd.read_csv(uploaded_file, encoding='utf-8', decimal=',')
+    option = st.selectbox(
+    "Selecione uma prova:",
+    (dfCDN['Name']),
+    index=None,
+    placeholder="Selecione uma prova...",
+    )
+
+    selec = dfCDN[dfCDN['Name'] == option]
+    link = []
+
+    for i in selec.index:
+        link.append(selec.loc[i, 'Link'])
+
+    if option is not None:
+        dItens = pd.read_csv(link[0], encoding='utf-8', decimal=',')
         a, b, c = zip(*dItens[['NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']].values.tolist())
         total = len(a)
         st.title("Simulado "+str(flashnamesa(dItens['SG_AREA'][0]))+':')
+        print('fazemos')
     else:
-        st.subheader("Adicione o arquivo .csv do seu simulado ao lado ou gere seu simulado.")
+        print('s')
+        #st.subheader("Adicione o arquivo .csv do seu simulado ao lado ou gere seu simulado.")
 
 
     anwers = []
     erradas = []
     with st.form("form", clear_on_submit=False):
 
-        if uploaded_file is not None :
+        if option is not None :
             nu = 1
             for i in dItens.index:
                 strCN ="Nº"+str(nu)+" - Q" + str(dItens.loc[i, "CO_POSICAO"])+':'+str(dItens.loc[i, "ANO"]) 

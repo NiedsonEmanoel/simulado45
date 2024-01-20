@@ -571,17 +571,19 @@ def main():
 
                     print(f'Arquivos foram zipados para {zip_filename} e os originais foram removidos.')
 
-                    with open(zip_filename, "rb") as fp:
-                        st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
-                        st.info('Baixe seu material de estudo ao lado.', icon="ℹ️")
-                        st.snow()
-                        st.sidebar.download_button(
-                            label="Download Material de Estudo",
-                            type='primary',
-                            data=fp,
-                            file_name=zip_filename,
-                            mime='application/zip',
-                        )
+    try:
+        with open('materialestudo.zip', "rb") as fp:
+            #st.info('Baixe seu material de estudo ao lado.', icon="ℹ️")
+            #st.snow()
+            st.download_button(
+                label="Download Material de Estudo",
+                type='primary',
+                data=fp,
+                file_name=zip_filename,
+                mime='application/zip',
+            )
+    except:
+        pass
 
 if __name__ == "__main__":
     main()

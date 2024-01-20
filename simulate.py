@@ -20,7 +20,24 @@ from wordcloud import WordCloud
 import barcode
 import zipfile
 from barcode.writer import ImageWriter
-
+from urllib.parse import urlencode
+import json
+from streamlit_drawable_canvas import st_canvas
+def serialize_url(a, b, c, re):
+    base_url = "https://r.api.enemaster.app.br/tri"
+    
+    params = {
+        'a': ', '.join(map(str, a)),
+        'b': ', '.join(map(str, b)),
+        'c': ', '.join(map(str, c)),
+        're': ', '.join(map(str, re))
+    }
+    
+    encoded_params = urlencode(params, safe=', ')
+    
+    serialized_url = f"{base_url}?{encoded_params}"
+    
+    return serialized_url
 
 def flashnamesa(SG):
     if SG == 'CN': return 'Natureza'
@@ -142,7 +159,6 @@ def generate_random_number():
     # Gerar um número inteiro aleatório entre 0 e 100000
     return random.randint(0, 100000)
 
-
 def questHab(dfResult_CN, name):
     try:
         cols_to_drop = ['TP_LINGUA', 'TX_MOTIVO_ABAN', 'IN_ITEM_ABAN', 'IN_ITEM_ADAPTADO', 'NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']
@@ -263,34 +279,6 @@ def questHab(dfResult_CN, name):
     pdf.output(strOut, 'F')
 
     return strOut
-
-
-def calcular_probabilidade(theta, a, b, c):
-    return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
-
-
-def calcular_verossimilhanca(theta, a, b, c, x):
-    if x.ndim == 1:
-        x = np.expand_dims(x, axis=1)
-    num_itens, num_candidatos = x.shape
-    verossimilhanca = np.ones(num_candidatos)
-    for i, item in enumerate(x):
-        p = calcular_probabilidade(theta, a[i], b[i], c[i])
-        verossimilhanca *= np.power(p, item) * np.power(1 - p, 1 - item)
-    return np.prod(verossimilhanca)
-
-def encontrar_theta_max(a, b, c, x):
-    if len(a) != x.shape[0] or len(b) != x.shape[0] or len(c) != x.shape[0]:
-        raise ValueError("O comprimento das listas de parâmetros a, b e c deve corresponder ao número de itens em x.")
-
-    if x.ndim == 1:
-        x = np.expand_dims(x, axis=1)
-
-    theta_max_list = []
-    for i in range(x.shape[1]):
-        result = minimize_scalar(lambda theta: -calcular_verossimilhanca(theta, a, b, c, x[:, i]), bounds=(-3, 5), method='bounded')
-        theta_max_list.append(result.x * 100 + 500)
-    return theta_max_list
 
 modelo = genanki.Model(
     187333333,
@@ -436,85 +424,38 @@ def questionBalance_65(name, sg, nota_CN, dfResult):
     pacote.write_to_file(str(name)+'_treino.apkg')
     return str(name)+'_treino', ileo
 
-st.set_page_config(layout='wide', page_title='Enemaster.app', initial_sidebar_state="expanded", page_icon="🧊",    menu_items={
+
+
+st.set_page_config(page_title='Enemaster.app', initial_sidebar_state="expanded", page_icon="🧊",    menu_items={
         'About': "# Feito por *enemaster.app*"
     })
 
 def main():
     gerated = False
     dItens = pd.DataFrame()
-    st.sidebar.markdown(f'<img width="100%" src="https://raw.githubusercontent.com/NiedsonEmanoel/NiedsonEmanoel/main/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/natureza/EneMaster.png">',unsafe_allow_html=True)
-    st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
-    option = st.sidebar.selectbox(
-    "Para qual prova gerar o simulado?",
-    ("Linguagens (sem idiomas)", "Humanas", "Natureza", "Matemática"),
-    index=None,
-    placeholder="Selecione uma prova...",
-    )
-    if st.sidebar.button('Gerar!', type='primary'):
-        if option is not None:
-            urlItens = "https://github.com/NiedsonEmanoel/NiedsonEmanoel/raw/main/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/gerador/provasOrdernadasPorTri.csv"
-            dLeso = pd.read_csv(urlItens, encoding='utf-8', decimal=',')
-            disciplina = ''
+    #st.sidebar.markdown(f'<img width="100%" src="https://raw.githubusercontent.com/NiedsonEmanoel/NiedsonEmanoel/main/enem/An%C3%A1lise%20de%20Itens/OrdenarPorTri/natureza/EneMaster.png">',unsafe_allow_html=True)
+    #st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
 
-            if option=="Linguagens (sem idiomas)":
-                disciplina = 'LC'
-            elif option=="Humanas":
-                disciplina = 'CH'
-            elif option =='Natureza':
-                disciplina='CN'
-            else:
-                disciplina='MT'
-            
-            dLeso = dLeso[dLeso['SG_AREA'] == disciplina]
-            dLeso = dLeso[dLeso['CO_HABILIDADE'].between(1, 30)]
-            dLeso = dLeso[dLeso['IN_ITEM_ABAN'] == 0]
 
-            dLeso.sort_values('theta_065', ascending=True, inplace=True)
+    with st.sidebar:
+        st.subheader('Anotações: ')
 
-            if disciplina == 'LC':
-                dLeso = dLeso[~dLeso['CO_HABILIDADE'].isin([5, 6, 7, 8])]
-            #
-            habilidades_unicas = dLeso.groupby('CO_HABILIDADE').sample(1)
-            habilidades_repetidas = dLeso.groupby('CO_HABILIDADE').apply(lambda x: x.sample(min(len(x), 3)))
-            habilidades_repetidas = habilidades_repetidas.sample(n=12, replace=True)
-            resultado = pd.concat([habilidades_unicas, habilidades_repetidas])
-            habilidades_presentes = resultado['CO_HABILIDADE'].unique()
-            if disciplina != 'LC':
-                if len(habilidades_presentes) < 30:
-                    # Calcular o número de habilidades faltantes
-                    habilidades_faltantes = np.setdiff1d(range(1, 31), habilidades_presentes)
-                    num_faltantes = 30 - len(habilidades_presentes)
+            # Create a canvas component
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+            stroke_width=1,
+            stroke_color='#000000',
+            background_color='#EEEEEE',
+            update_streamlit=True,
+            height=645,
+            width=288,
+            drawing_mode="freedraw",
+            key="canvas",
+        )
 
-                    # Selecionar itens adicionais para as habilidades faltantes
-                    itens_faltantes = dLeso[dLeso['CO_HABILIDADE'].isin(habilidades_faltantes)].sample(n=num_faltantes, replace=True)
+    
 
-                    # Combinar os itens faltantes com os resultados atuais
-                    resultado = pd.concat([resultado, itens_faltantes])
-            # Verificar o número de itens atual
-            num_itens = len(resultado)
-
-            # Remover itens extras se o número atual for maior que 45
-            if num_itens > 45:
-                resultado = resultado.sample(n=45)
-
-            # Preencher com itens adicionais se o número atual for menor que 45
-            if num_itens < 45:
-                num_adicionais = 45 - num_itens
-                itens_adicionais = dLeso.sample(n=num_adicionais, replace=True)
-                resultado = pd.concat([resultado, itens_adicionais])
-            
-            csv = resultado.to_csv(index=False, encoding='utf-8', decimal=',')
-            st.sidebar.download_button(
-                label="Download .csv Simulado",
-                data=csv,
-                #type='primary',
-                file_name='simulado'+disciplina+'.csv',
-                mime='text/csv',
-            )
-
-    st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
-    uploaded_file = st.sidebar.file_uploader("Envie o arquivo do Simulado", type=['csv'])
+    uploaded_file = st.file_uploader("Envie o arquivo do Simulado", type=['csv'])
     if uploaded_file is not None:
         dItens = pd.read_csv(uploaded_file, encoding='utf-8', decimal=',')
         a, b, c = zip(*dItens[['NU_PARAM_A', 'NU_PARAM_B', 'NU_PARAM_C']].values.tolist())
@@ -555,11 +496,25 @@ def main():
             submitted = st.form_submit_button("Concluir!", type="primary")
             if submitted:
                 x = np.array(anwers)
+                nota = 0
                 with st.spinner("Estimando sua nota TRI..."):
                     time.sleep(2)
-                    theta_max_list = encontrar_theta_max(a, b, c, x)
-                tri = round(theta_max_list[0],2)
-                st.success('Sua nota aproximada é: '+str(tri), icon="✅")
+                    url = serialize_url(a, b, c, x)
+                    print(url)
+
+                    # Fazer a solicitação HTTP
+                    response = requests.get(url)
+
+                    # Analisar a resposta JSON
+                    data = json.loads(response.text)
+
+                    # Extrair o número
+                    nota = data['nota'][0]
+                    nota_max = data['nota_max'][0]
+                    nota_min = data['nota_min'][0]
+                tri = round(nota,2)
+                st.success(f"Nota TRI: {tri}", icon="✅")
+                st.info(f"Sendo aproximada em {round((nota/nota_max)*100,2)}% da nota máxima ({round(nota_max,2)})", icon="ℹ️")
                 erradas = pd.DataFrame(erradas)
                 with st.spinner("Gerando material de estudo..."):
 
@@ -602,7 +557,7 @@ def main():
                     with open(zip_filename, "rb") as fp:
                         st.sidebar.markdown(f"<hr>",unsafe_allow_html=True)
                         st.info('Baixe seu material de estudo ao lado.', icon="ℹ️")
-                        st.balloons()
+                        st.snow()
                         st.sidebar.download_button(
                             label="Download Material de Estudo",
                             type='primary',

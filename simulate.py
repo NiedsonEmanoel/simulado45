@@ -431,6 +431,7 @@ st.set_page_config(page_title='Enemaster.app', initial_sidebar_state="expanded",
         'About': "# Feito por *enemaster.app*"
     })
 
+
 def main():
     gerated = False
     dItens = pd.DataFrame()
